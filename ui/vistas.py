@@ -482,13 +482,30 @@ def registrar_vistas(robot: RobotCocina) -> None:
                 ).classes('text-body2 text-grey-6 q-mb-md')
 
                 with ui.row().classes('q-gutter-md'):
-                    input_nombre = ui.input('Nombre del proceso').classes('col-12 col-md-4')
-                    input_tipo = ui.input('Tipo (preparación, cocción, amasado, etc.)').classes('col-12 col-md-7')
-                    input_temp = ui.number('Temperatura (ºC, 0 si no aplica)', value=0).classes('col-12 col-md-4')
+                    input_nombre = ui.input('Nombre del proceso').classes('col-12 col-md-5')
+                    input_tipo = ui.input('Tipo (preparación, cocción, amasado, etc.)').classes('col-12 col-md-9')
+                    # Temperatura limitada entre 0 y 120 ºC
+                    input_temp = ui.number(
+                        'Temperatura (0-120ºC, 0 si no aplica)', 
+                        value=0,
+                        min=0,
+                        max=120,
+                    ).classes('col-12 col-md-6')
 
                 with ui.row().classes('q-gutter-md q-mt-xs'):
-                    input_tiempo = ui.number('Tiempo (segundos)', value=60).classes('col-12 col-md-4')
-                    input_velocidad = ui.number('Velocidad (0 si no aplica)', value=0).classes('col-12 col-md-5')
+                    # Tiempo en segundos, mínimo 0
+                    input_tiempo = ui.number(
+                        'Tiempo (segundos)', 
+                        value=60,
+                        min=0,
+                    ).classes('col-12 col-md-6')
+                    # Velocidad limitada entre 0 y 10
+                    input_velocidad = ui.number(
+                        'Velocidad (0-10 si no aplica)', 
+                        value=0,
+                        min=0,
+                        max=10,
+                    ).classes('col-12 col-md-8')
 
                 def crear_proceso():
                     try:
@@ -500,6 +517,14 @@ def registrar_vistas(robot: RobotCocina) -> None:
 
                         if not nombre:
                             ui.notify('El nombre del proceso es obligatorio.', color='negative')
+                            return
+                        
+                        if not (0 <= velocidad <= 10):
+                            ui.notify('La velocidad debe estar entre 0 y 10.', color='negative')
+                            return
+                        
+                        if not (0 <= temperatura <= 120):
+                            ui.notify('La temperatura debe estar entre 0 y 120 ºC.', color='negative')
                             return
 
                         # Evitar nombres duplicados en procesos de usuario
