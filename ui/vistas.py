@@ -10,16 +10,38 @@ from robot.modelos import (
 )
 from robot import servicios
 
+DEFAULT_THEME_SET = False
+THEME_STATE = {'dark': False}
 
 def _cabecera(pagina: str) -> None:
     """Barra superior común a todas las vistas."""
-    with ui.header().classes('bg-primary text-white q-px-md'):
+
+    # Controlador de modo oscuro para este cliente.
+    # Forzamos su valor al que tengamos guardado en THEME_STATE.
+    dark = ui.dark_mode()
+    dark.value = bool(THEME_STATE['dark'])
+    current_dark = dark.value
+
+    base_header = 'q-px-md'
+    light_header = 'bg-primary text-white'
+    dark_header = 'bg-grey-9 text-grey-1'
+    CLASES_HEADER_COLOR = 'bg-primary bg-grey-9 text-white text-grey-1'
+
+    # Creamos el header y aplicamos clases según el modo actual
+    header = ui.header()
+    header.classes(base_header)
+    header.classes(dark_header if current_dark else light_header)
+
+    with header:
         with ui.row().classes('items-center justify-between w-full'):
+            # ---- Lado izquierdo: icono + título ----
             with ui.row().classes('items-center gap-2'):
                 ui.icon('soup_kitchen').classes('text-h5')
                 ui.label('Robot de cocina').classes('text-h5')
 
-            with ui.row().classes('gap-1'):
+            # ---- Lado derecho: navegación + toggle modo oscuro ----
+            with ui.row().classes('items-center gap-2'):
+
                 def boton_nav(texto: str, ruta: str, actual: bool) -> None:
                     color = 'white'
                     estilos = 'text-weight-bold' if actual else 'text-weight-regular'
@@ -31,6 +53,34 @@ def _cabecera(pagina: str) -> None:
                 boton_nav('Panel', '/', pagina == 'panel')
                 boton_nav('Procesos', '/procesos', pagina == 'procesos')
                 boton_nav('Recetas', '/recetas', pagina == 'recetas')
+
+                # ---- Toggle modo claro / oscuro ----
+                with ui.row().classes('items-center gap-1 q-ml-md'):
+                    icon_tema = ui.icon(
+                        'dark_mode' if current_dark else 'light_mode'
+                    ).classes('text-subtitle2')
+
+                    def cambiar_tema(e):
+                        # 1) Actualizar estado global
+                        THEME_STATE['dark'] = bool(e.value)
+
+                        # 2) Actualizar controlador de NiceGUI
+                        dark.value = bool(e.value)
+
+                        # 3) Cambiar icono
+                        nuevo_nombre = 'dark_mode' if e.value else 'light_mode'
+                        icon_tema.props(f'name={nuevo_nombre}')
+
+                        # 4) Actualizar clases del header: primero quitamos todas las de color, luego añadimos
+                        header.classes(remove=CLASES_HEADER_COLOR)
+                        header.classes(dark_header if e.value else light_header)
+
+                    ui.switch(
+                        '',
+                        value=current_dark,
+                        on_change=cambiar_tema,
+                    ).props('dense')
+                    ui.tooltip('Modo oscuro / claro')
 
 
 def registrar_vistas(robot: RobotCocina) -> None:
@@ -213,7 +263,7 @@ def registrar_vistas(robot: RobotCocina) -> None:
                 barra_progreso = ui.linear_progress(
                     value=0.0,
                     show_value=False,
-                    size='10px',       
+                    size='10px',
                 ).props('striped').classes('w-full q-mt-xs')
 
                 with ui.row().classes('items-center justify-between q-mt-sm'):
@@ -530,7 +580,7 @@ def registrar_vistas(robot: RobotCocina) -> None:
                     input_tipo = ui.input('Tipo (preparación, cocción, amasado, etc.)').classes('col-12 col-md-9')
                     # Temperatura limitada entre 0 y 120 ºC
                     input_temp = ui.number(
-                        'Temperatura (0-120ºC, 0 si no aplica)', 
+                        'Temperatura (0-120ºC, 0 si no aplica)',
                         value=0,
                         min=0,
                         max=120,
@@ -539,13 +589,13 @@ def registrar_vistas(robot: RobotCocina) -> None:
                 with ui.row().classes('q-gutter-md q-mt-xs'):
                     # Tiempo en segundos, mínimo 0
                     input_tiempo = ui.number(
-                        'Tiempo (segundos)', 
+                        'Tiempo (segundos)',
                         value=60,
                         min=0,
                     ).classes('col-12 col-md-6')
                     # Velocidad limitada entre 0 y 10
                     input_velocidad = ui.number(
-                        'Velocidad (0-10 si no aplica)', 
+                        'Velocidad (0-10 si no aplica)',
                         value=0,
                         min=0,
                         max=10,
@@ -562,11 +612,11 @@ def registrar_vistas(robot: RobotCocina) -> None:
                         if not nombre:
                             ui.notify('El nombre del proceso es obligatorio.', color='negative')
                             return
-                        
+
                         if not (0 <= velocidad <= 10):
                             ui.notify('La velocidad debe estar entre 0 y 10.', color='negative')
                             return
-                        
+
                         if not (0 <= temperatura <= 120):
                             ui.notify('La temperatura debe estar entre 0 y 120 ºC.', color='negative')
                             return
