@@ -382,7 +382,7 @@ def registrar_vistas(robot: RobotCocina) -> None:
             # 👇 todas las clases de color que vamos a usar en los estados
             CLASES_COLOR = (
                 'text-grey-8 text-blue-grey-8 text-green-9 text-amber-9 text-red-9 '
-                'bg-grey-2 bg-blue-grey-1 bg-green-2 bg-amber-2 bg-red-2'
+                'bg-grey-2 bg-blue-grey-2 bg-green-2 bg-amber-2 bg-red-2'
             )
 
             estilos_estado = {
@@ -392,7 +392,7 @@ def registrar_vistas(robot: RobotCocina) -> None:
                 },
                 EstadoRobot.ESPERA: {
                     'texto': 'Estado: EN ESPERA',
-                    'clases': 'text-blue-grey-8 bg-blue-grey-1',
+                    'clases': 'text-blue-grey-8 bg-blue-grey-2',
                 },
                 EstadoRobot.COCINANDO: {
                     'texto': 'Estado: COCINANDO',
