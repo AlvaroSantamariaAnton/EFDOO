@@ -518,55 +518,6 @@ def registrar_vistas(robot: RobotCocina) -> None:
                     rows=[],
                 ).props('flat bordered wrap cell-class="px-4 py-2"').classes('w-full')
 
-            # --- Procesos usuario + borrar ---
-            with ui.card().classes('q-pa-md'):
-                ui.label('Procesos de usuario').classes('text-h6 q-mb-xs')
-                ui.label(
-                    'Crea procesos que luego podrás utilizar en tus propias recetas.'
-                ).classes('text-body2 text-grey-6 q-mb-sm')
-
-                tabla_usuario = ui.table(
-                    columns=columnas_procesos,
-                    rows=[],
-                ).props('flat bordered wrap cell-class="px-4 py-2"').classes('w-full q-mb-md')
-
-                # Mapeo nombre -> proceso usuario (para borrar sin mostrar ID)
-                procesos_usuario_por_nombre: Dict[str, object] = {}
-
-                with ui.row().classes('items-end q-gutter-sm'):
-                    select_proceso_borrar = ui.select(
-                        options=[],
-                        label='Proceso a eliminar',
-                        clearable=True,
-                    ).classes('col-12 col-md-7')
-
-                    # Botón ancho y compacto con encadenado correcto
-                    (
-                        ui.button(
-                            'Eliminar\nproceso seleccionado',
-                            on_click=lambda: borrar_proceso(),
-                            color='red',
-                        )
-                        .props('outline icon=delete stack no-caps')
-                        .classes('col-12 col-md-4 text-center q-pa-sm')
-                        .style('min-width: 260px; height: 65px;')
-                    )
-
-                def borrar_proceso():
-                    nombre = select_proceso_borrar.value
-                    if not nombre:
-                        ui.notify('Selecciona un proceso de usuario.', color='warning')
-                        return
-
-                    proceso = procesos_usuario_por_nombre.get(nombre)
-                    if not proceso:
-                        ui.notify('Proceso no encontrado (puede haber cambiado).', color='negative')
-                        return
-
-                    servicios.eliminar_proceso_usuario(proceso.id)
-                    ui.notify('Proceso eliminado.', color='positive')
-                    refrescar_listados()
-
             # --- Crear proceso usuario ---
             with ui.card().classes('q-pa-md'):
                 ui.label('Nuevo proceso de usuario').classes('text-h6 q-mb-xs')
@@ -648,6 +599,55 @@ def registrar_vistas(robot: RobotCocina) -> None:
 
                 ui.button('Guardar proceso', on_click=crear_proceso, color='green').props('unelevated q-mt-md')
 
+            # --- Procesos usuario + borrar ---
+            with ui.card().classes('q-pa-md'):
+                ui.label('Procesos de usuario').classes('text-h6 q-mb-xs')
+                ui.label(
+                    'Crea procesos que luego podrás utilizar en tus propias recetas.'
+                ).classes('text-body2 text-grey-6 q-mb-sm')
+
+                tabla_usuario = ui.table(
+                    columns=columnas_procesos,
+                    rows=[],
+                ).props('flat bordered wrap cell-class="px-4 py-2"').classes('w-full q-mb-md')
+
+                # Mapeo nombre -> proceso usuario (para borrar sin mostrar ID)
+                procesos_usuario_por_nombre: Dict[str, object] = {}
+
+                with ui.row().classes('items-end q-gutter-sm'):
+                    select_proceso_borrar = ui.select(
+                        options=[],
+                        label='Proceso a eliminar',
+                        clearable=True,
+                    ).classes('col-12 col-md-7')
+
+                    # Botón ancho y compacto con encadenado correcto
+                    (
+                        ui.button(
+                            'Eliminar\nproceso seleccionado',
+                            on_click=lambda: borrar_proceso(),
+                            color='red',
+                        )
+                        .props('outline icon=delete stack no-caps')
+                        .classes('col-12 col-md-4 text-center q-pa-sm')
+                        .style('min-width: 260px; height: 65px;')
+                    )
+
+                def borrar_proceso():
+                    nombre = select_proceso_borrar.value
+                    if not nombre:
+                        ui.notify('Selecciona un proceso de usuario.', color='warning')
+                        return
+
+                    proceso = procesos_usuario_por_nombre.get(nombre)
+                    if not proceso:
+                        ui.notify('Proceso no encontrado (puede haber cambiado).', color='negative')
+                        return
+
+                    servicios.eliminar_proceso_usuario(proceso.id)
+                    ui.notify('Proceso eliminado.', color='positive')
+                    refrescar_listados()
+
         # --- Refrescar tablas ---
         def refrescar_listados():
             # Procesos base
@@ -727,111 +727,6 @@ def registrar_vistas(robot: RobotCocina) -> None:
                     columns=columnas_recetas,
                     rows=[],
                 ).props('flat bordered wrap cell-class="px-4 py-2"').classes('w-full')
-
-            # --- Recetas usuario + borrar ---
-            with ui.card().classes('q-pa-md'):
-                ui.label('Recetas de usuario').classes('text-h6 q-mb-xs')
-                ui.label(
-                    'Tus propias recetas guiadas. Haz clic en una fila para ver sus pasos.'
-                ).classes('text-body2 text-grey-6 q-mb-sm')
-
-                tabla_usuario = ui.table(
-                    columns=columnas_recetas,
-                    rows=[],
-                ).props('flat bordered wrap cell-class="px-4 py-2"').classes('w-full q-mb-md')
-
-                recetas_base_por_nombre: Dict[str, object] = {}
-                recetas_usuario_por_nombre: Dict[str, object] = {}
-
-                with ui.row().classes('items-end q-gutter-sm'):
-                    select_receta_borrar = ui.select(
-                        options=[],
-                        label='Receta de usuario a eliminar',
-                        clearable=True,
-                    ).classes('col-12 col-md-9')
-
-                    (
-                        ui.button(
-                            'Eliminar\nreceta seleccionada',
-                            on_click=lambda: borrar_receta(),
-                            color='red',
-                        )
-                        .props('outline icon=delete stack no-caps')
-                        .classes('col-12 col-md-4 text-center q-pa-sm')
-                        .style('min-width: 260px; height: 65px;')
-                    )
-
-                def mostrar_pasos_receta(receta) -> None:
-                    with ui.dialog() as dialog, ui.card():
-                        ui.label(f'Pasos de "{receta.nombre}"').classes('text-h6 q-mb-xs')
-                        ui.label(receta.descripcion).classes('text-body2 text-grey-7 q-mb-sm')
-                        if not receta.pasos:
-                            ui.label('La receta no tiene pasos definidos.')
-                        else:
-                            for paso in receta.pasos:
-                                desc = paso.proceso.descripcion_resumida()
-                                ui.label(f"{paso.orden}. {desc}")
-                        ui.button('Cerrar', on_click=dialog.close).classes('q-mt-sm')
-                    dialog.open()
-
-                def _extraer_nombre_desde_evento(e: Any) -> str | None:
-                    """
-                    Intenta extraer el 'nombre' de la fila a partir de e.args
-                    de forma robusta para varias versiones de NiceGUI.
-                    """
-                    args = e.args
-
-                    # Caso 1: dict con 'row'
-                    if isinstance(args, dict):
-                        row = args.get('row') or args
-                        if isinstance(row, dict):
-                            return row.get('nombre')
-
-                    # Caso 2: lista/tupla de argumentos
-                    if isinstance(args, (list, tuple)):
-                        # Buscar dict con 'nombre'
-                        for item in args:
-                            if isinstance(item, dict) and 'nombre' in item:
-                                return item.get('nombre')
-                        # En algunos ejemplos e.args[1] puede ser la fila
-                        if len(args) >= 2 and isinstance(args[1], dict):
-                            return args[1].get('nombre')
-
-                    return None
-
-                def on_click_receta_base(e):
-                    nombre = _extraer_nombre_desde_evento(e)
-                    if not nombre:
-                        return
-                    receta = recetas_base_por_nombre.get(nombre)
-                    if receta:
-                        mostrar_pasos_receta(receta)
-
-                def on_click_receta_usuario(e):
-                    nombre = _extraer_nombre_desde_evento(e)
-                    if not nombre:
-                        return
-                    receta = recetas_usuario_por_nombre.get(nombre)
-                    if receta:
-                        mostrar_pasos_receta(receta)
-
-                # Evento correcto: 'row-click'
-                tabla_base.on('row-click', on_click_receta_base)
-                tabla_usuario.on('row-click', on_click_receta_usuario)
-
-                def borrar_receta():
-                    nombre = select_receta_borrar.value
-                    if not nombre:
-                        ui.notify('Selecciona una receta de usuario.', color='warning')
-                        return
-                    receta = recetas_usuario_por_nombre.get(nombre)
-                    if not receta:
-                        ui.notify('Receta de usuario no encontrada.', color='negative')
-                        return
-
-                    servicios.eliminar_receta_usuario(receta.id)
-                    ui.notify('Receta eliminada.', color='positive')
-                    refrescar_listados_recetas()
 
             # --- Crear receta usuario ---
             with ui.card().classes('q-pa-md'):
@@ -1046,6 +941,111 @@ def registrar_vistas(robot: RobotCocina) -> None:
                     on_click=crear_receta,
                     color='green',
                 ).props('unelevated q-mt-md')
+
+            # --- Recetas usuario + borrar ---
+            with ui.card().classes('q-pa-md'):
+                ui.label('Recetas de usuario').classes('text-h6 q-mb-xs')
+                ui.label(
+                    'Tus propias recetas guiadas. Haz clic en una fila para ver sus pasos.'
+                ).classes('text-body2 text-grey-6 q-mb-sm')
+
+                tabla_usuario = ui.table(
+                    columns=columnas_recetas,
+                    rows=[],
+                ).props('flat bordered wrap cell-class="px-4 py-2"').classes('w-full q-mb-md')
+
+                recetas_base_por_nombre: Dict[str, object] = {}
+                recetas_usuario_por_nombre: Dict[str, object] = {}
+
+                with ui.row().classes('items-end q-gutter-sm'):
+                    select_receta_borrar = ui.select(
+                        options=[],
+                        label='Receta de usuario a eliminar',
+                        clearable=True,
+                    ).classes('col-12 col-md-9')
+
+                    (
+                        ui.button(
+                            'Eliminar\nreceta seleccionada',
+                            on_click=lambda: borrar_receta(),
+                            color='red',
+                        )
+                        .props('outline icon=delete stack no-caps')
+                        .classes('col-12 col-md-4 text-center q-pa-sm')
+                        .style('min-width: 260px; height: 65px;')
+                    )
+
+                def mostrar_pasos_receta(receta) -> None:
+                    with ui.dialog() as dialog, ui.card():
+                        ui.label(f'Pasos de "{receta.nombre}"').classes('text-h6 q-mb-xs')
+                        ui.label(receta.descripcion).classes('text-body2 text-grey-7 q-mb-sm')
+                        if not receta.pasos:
+                            ui.label('La receta no tiene pasos definidos.')
+                        else:
+                            for paso in receta.pasos:
+                                desc = paso.proceso.descripcion_resumida()
+                                ui.label(f"{paso.orden}. {desc}")
+                        ui.button('Cerrar', on_click=dialog.close).classes('q-mt-sm')
+                    dialog.open()
+
+                def _extraer_nombre_desde_evento(e: Any) -> str | None:
+                    """
+                    Intenta extraer el 'nombre' de la fila a partir de e.args
+                    de forma robusta para varias versiones de NiceGUI.
+                    """
+                    args = e.args
+
+                    # Caso 1: dict con 'row'
+                    if isinstance(args, dict):
+                        row = args.get('row') or args
+                        if isinstance(row, dict):
+                            return row.get('nombre')
+
+                    # Caso 2: lista/tupla de argumentos
+                    if isinstance(args, (list, tuple)):
+                        # Buscar dict con 'nombre'
+                        for item in args:
+                            if isinstance(item, dict) and 'nombre' in item:
+                                return item.get('nombre')
+                        # En algunos ejemplos e.args[1] puede ser la fila
+                        if len(args) >= 2 and isinstance(args[1], dict):
+                            return args[1].get('nombre')
+
+                    return None
+
+                def on_click_receta_base(e):
+                    nombre = _extraer_nombre_desde_evento(e)
+                    if not nombre:
+                        return
+                    receta = recetas_base_por_nombre.get(nombre)
+                    if receta:
+                        mostrar_pasos_receta(receta)
+
+                def on_click_receta_usuario(e):
+                    nombre = _extraer_nombre_desde_evento(e)
+                    if not nombre:
+                        return
+                    receta = recetas_usuario_por_nombre.get(nombre)
+                    if receta:
+                        mostrar_pasos_receta(receta)
+
+                # Evento correcto: 'row-click'
+                tabla_base.on('row-click', on_click_receta_base)
+                tabla_usuario.on('row-click', on_click_receta_usuario)
+
+                def borrar_receta():
+                    nombre = select_receta_borrar.value
+                    if not nombre:
+                        ui.notify('Selecciona una receta de usuario.', color='warning')
+                        return
+                    receta = recetas_usuario_por_nombre.get(nombre)
+                    if not receta:
+                        ui.notify('Receta de usuario no encontrada.', color='negative')
+                        return
+
+                    servicios.eliminar_receta_usuario(receta.id)
+                    ui.notify('Receta eliminada.', color='positive')
+                    refrescar_listados_recetas()
 
         # --- Refrescar tablas y opciones de selects ---
         def refrescar_listados_recetas():
